@@ -4,35 +4,21 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class NetworkedClient : MonoBehaviour
+public static class NetworkedClient
 {
+    private static int connectionID;
+    private static int maxConnections = 1000;
+    private static int reliableChannelID;
+    private static int unreliableChannelID;
+    private static int hostID;
+    private static int socketPort = 25001;
+    private static byte error;
+    private static bool isConnected = false;
+    private static int ourClientID;
 
-    int connectionID;
-    int maxConnections = 1000;
-    int reliableChannelID;
-    int unreliableChannelID;
-    int hostID;
-    int socketPort = 5491;
-    byte error;
-    bool isConnected = false;
-    int ourClientID;
+  
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        Connect();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.S))
-            SendMessageToHost("Hello from client");
-
-        UpdateNetworkConnection();
-    }
-
-    private void UpdateNetworkConnection()
+    public static void UpdateNetworkConnection()
     {
         if (isConnected)
         {
@@ -63,7 +49,7 @@ public class NetworkedClient : MonoBehaviour
         }
     }
     
-    private void Connect()
+    public static void Connect()
     {
 
         if (!isConnected)
@@ -79,35 +65,36 @@ public class NetworkedClient : MonoBehaviour
             hostID = NetworkTransport.AddHost(topology, 0);
             Debug.Log("Socket open.  Host ID = " + hostID);
 
-            connectionID = NetworkTransport.Connect(hostID, "192.168.2.37", socketPort, 0, out error); // server is local on network
+            connectionID = NetworkTransport.Connect(hostID, "192.168.1.109", socketPort, 0, out error); // server is local on network
 
             if (error == 0)
             {
                 isConnected = true;
 
                 Debug.Log("Connected, id = " + connectionID);
+                //SendMessageToHost("Hello from client");
 
             }
         }
     }
     
-    public void Disconnect()
+    public static void Disconnect()
     {
         NetworkTransport.Disconnect(hostID, connectionID, out error);
     }
     
-    public void SendMessageToHost(string msg)
+    public static void SendMessageToHost(string msg)
     {
         byte[] buffer = Encoding.Unicode.GetBytes(msg);
         NetworkTransport.Send(hostID, connectionID, reliableChannelID, buffer, msg.Length * sizeof(char), out error);
     }
 
-    private void ProcessRecievedMsg(string msg, int id)
+    private static void ProcessRecievedMsg(string msg, int id)
     {
         Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
     }
 
-    public bool IsConnected()
+    public static bool IsConnected()
     {
         return isConnected;
     }
