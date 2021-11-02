@@ -11,6 +11,7 @@ public class LoginForm : MonoBehaviour
     private GameObject PasswordObject;
     private GameObject LoginButtonObject;
     private GameObject RegisterButtonObject;
+    private GameObject ErrorMessage;
 
     private string username = "";
     private string password = "";
@@ -37,18 +38,25 @@ public class LoginForm : MonoBehaviour
             {
                 RegisterButtonObject = go;
             }
+            else if(go.name == "ErrorMessage")
+            {
+                ErrorMessage = go;
+            }
         }
 
         LoginButtonObject.GetComponent<Button>().onClick.AddListener(Login);
         RegisterButtonObject.GetComponent<Button>().onClick.AddListener(Register);
+        SetErrorMessage(false); //hide the error message
     }
 
     // Update is called once per frame
     void Update()
     {
-        
     }
-
+    private void FixedUpdate()
+    {
+        SetErrorMessage(NetworkedClient.GetServerErrorStatus(), NetworkedClient.GetServerMessage());
+    }
     public void Login()
     {
         username = UsernameObject.GetComponent<TMP_InputField>().text;
@@ -61,5 +69,11 @@ public class LoginForm : MonoBehaviour
         username = UsernameObject.GetComponent<TMP_InputField>().text;
         password = PasswordObject.GetComponent<TMP_InputField>().text;
         NetworkedClient.SendMessageToHost(ServerClientSignifiers.Register + "," + username + "," + password);
+    }
+
+    public void SetErrorMessage(bool error, string msg = "")
+    {
+        ErrorMessage.GetComponent<TMPro.TextMeshProUGUI>().text = msg;
+        ErrorMessage.SetActive(error);
     }
 }

@@ -23,18 +23,6 @@ public class GameServerConnection : MonoBehaviour
     {
         NetworkedClient.UpdateNetworkConnection();
 
-        if(Input.GetKeyDown(KeyCode.Keypad0))
-        {
-            SceneManager.LoadScene(0);
-        }
-        if (Input.GetKeyDown(KeyCode.Keypad1))
-        {
-            SceneManager.LoadScene(1);
-        }
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            NetworkedClient.SendMessageToHost("Hellooooooo");
-        }
     }
 
     private void OnlyOne(GameServerConnection[] list)

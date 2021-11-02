@@ -15,6 +15,8 @@ public static class NetworkedClient
     private static byte error;
     private static bool isConnected = false;
     private static int ourClientID;
+    private static bool serverErrorStatus = false;
+    private static string serverMsg;
 
   
 
@@ -91,13 +93,23 @@ public static class NetworkedClient
 
     private static void ProcessRecievedMsg(string msg, int id)
     {
-        Debug.Log("msg recieved = " + msg + ".  connection id = " + id);
+        string[] data = msg.Split(',');
+        serverMsg = data[2];
+
+        if (data[0] == ServerStatus.Error)
+        {
+            serverErrorStatus = true;
+        }
+        if(data[0] == ServerStatus.Success)
+        {
+            serverErrorStatus = false;
+            //this means that we are logged in
+        }
     }
 
-    public static bool IsConnected()
-    {
-        return isConnected;
-    }
+    public static bool IsConnected() { return isConnected;}
+    public static string GetServerMessage() { return serverMsg;}
+    public static bool GetServerErrorStatus() { return serverErrorStatus;}
 
 
 }
@@ -105,5 +117,10 @@ public static class ServerClientSignifiers
 {
     public static string Login = "001";
     public static string Register = "002";
+}
+public static class ServerStatus
+{
+    public static string Success = "001";
+    public static string Error = "002";
 }
 
