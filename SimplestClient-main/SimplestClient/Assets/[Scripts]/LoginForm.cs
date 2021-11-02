@@ -40,6 +40,7 @@ public class LoginForm : MonoBehaviour
         }
 
         LoginButtonObject.GetComponent<Button>().onClick.AddListener(Login);
+        RegisterButtonObject.GetComponent<Button>().onClick.AddListener(Register);
     }
 
     // Update is called once per frame
@@ -52,6 +53,13 @@ public class LoginForm : MonoBehaviour
     {
         username = UsernameObject.GetComponent<TMP_InputField>().text;
         password = PasswordObject.GetComponent<TMP_InputField>().text;
-        Debug.Log("username: " + username + " ,password: " + password);
+        NetworkedClient.SendMessageToHost(ServerClientSignifiers.Login + "," +  username + "," + password);
+    }
+
+    public void Register()
+    {
+        username = UsernameObject.GetComponent<TMP_InputField>().text;
+        password = PasswordObject.GetComponent<TMP_InputField>().text;
+        NetworkedClient.SendMessageToHost(ServerClientSignifiers.Register + "," + username + "," + password);
     }
 }
