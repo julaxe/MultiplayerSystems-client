@@ -23,6 +23,11 @@ public class GameServerConnection : MonoBehaviour
     {
         NetworkedClient.UpdateNetworkConnection();
 
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit();
+        }
+
     }
 
     private void OnlyOne(GameServerConnection[] list)
