@@ -17,6 +17,7 @@ public static class NetworkedClient
     private static int ourClientID;
     private static bool serverErrorStatus = false;
     private static bool isLoggedIn = false;
+    private static bool inGame = false;
     private static string serverMsg;
 
   
@@ -96,19 +97,28 @@ public static class NetworkedClient
     {
         string[] data = msg.Split(',');
         serverMsg = data[2];
-
         if (data[0] == ServerStatus.Error)
         {
             serverErrorStatus = true;
         }
-        if(data[0] == ServerStatus.Success)
+        else if (data[0] == ServerStatus.Success)
         {
-            isLoggedIn = true;
+            serverErrorStatus = false;
+            if (data[1] == ServerClientSignifiers.Login || data[1] == ServerClientSignifiers.Register)
+            {
+                isLoggedIn = true;
+            }
+            else if (data[1] == ServerClientSignifiers.FindMatch)
+            {
+                inGame = true;
+            }
         }
+        Debug.Log("---- From server: " + msg);
     }
 
     public static bool IsConnected() { return isConnected;}
     public static bool IsLoggedIn() { return isLoggedIn;}
+    public static bool InGame() { return inGame;}
     public static string GetServerMessage() { return serverMsg;}
     public static bool GetServerErrorStatus() { return serverErrorStatus;}
 
