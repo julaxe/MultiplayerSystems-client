@@ -16,6 +16,7 @@ public static class NetworkedClient
     private static bool isConnected = false;
     private static int ourClientID;
     private static bool serverErrorStatus = false;
+    private static bool isLoggedIn = false;
     private static string serverMsg;
 
   
@@ -102,12 +103,12 @@ public static class NetworkedClient
         }
         if(data[0] == ServerStatus.Success)
         {
-            serverErrorStatus = false;
-            //this means that we are logged in
+            isLoggedIn = true;
         }
     }
 
     public static bool IsConnected() { return isConnected;}
+    public static bool IsLoggedIn() { return isLoggedIn;}
     public static string GetServerMessage() { return serverMsg;}
     public static bool GetServerErrorStatus() { return serverErrorStatus;}
 
@@ -117,6 +118,7 @@ public static class ServerClientSignifiers
 {
     public static string Login = "001";
     public static string Register = "002";
+    public static string FindMatch = "003";
 }
 public static class ServerStatus
 {

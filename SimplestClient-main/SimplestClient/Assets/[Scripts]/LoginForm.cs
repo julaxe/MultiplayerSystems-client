@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class LoginForm : MonoBehaviour
 {
@@ -48,14 +49,13 @@ public class LoginForm : MonoBehaviour
         RegisterButtonObject.GetComponent<Button>().onClick.AddListener(Register);
         SetErrorMessage(false); //hide the error message
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-    }
     private void FixedUpdate()
     {
         SetErrorMessage(NetworkedClient.GetServerErrorStatus(), NetworkedClient.GetServerMessage());
+        if(NetworkedClient.IsLoggedIn())
+        {
+            SceneManager.LoadScene(1); //Main menu
+        }
     }
     public void Login()
     {
