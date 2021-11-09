@@ -10,6 +10,8 @@ public class GameScene : MonoBehaviour
     private GameObject TicTacToeButtonPrefab;
     private GameObject TurnText;
     private GameObject VsText;
+    private GameObject[] TicTacToeButtons;
+    private string _board = "0 0 0 0 0 0 0 0 0";
 
     private bool _inGame = false;
 
@@ -20,6 +22,7 @@ public class GameScene : MonoBehaviour
         TicTacToe = GameObject.Find("Canvas/TicTacToe");
         TurnText = TicTacToe.transform.Find("Who's Turn").gameObject;
         VsText = TicTacToe.transform.Find("PlayingVS").gameObject;
+        TicTacToeButtons = new GameObject[9];
         TicTacToe.SetActive(false);
         CreateTicTacToeGrid();
     }
@@ -51,6 +54,8 @@ public class GameScene : MonoBehaviour
         {
             TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Opponent turn!";
         }
+
+        UpdateBoard();
     }
     private void CreateTicTacToeGrid()
     {
@@ -58,9 +63,24 @@ public class GameScene : MonoBehaviour
         Transform gridTransfrom = transform.Find("TicTacToe/Grid").transform;
         for(int i = 0; i < 9; i++)
         {
-            Instantiate(TicTacToeButtonPrefab, gridTransfrom);
+            TicTacToeButtons[i] = Instantiate(TicTacToeButtonPrefab, gridTransfrom);
+            TicTacToeButtons[i].GetComponent<ButtonTicTac>().PositionInBoard = i;
         }
     }
+
+    private void UpdateBoard()
+    {
+        if(_board != NetworkedClient.GetBoard())
+        {
+            _board = NetworkedClient.GetBoard();
+            string[] board = _board.Split(' ');
+            for (int i = 0; i < 9; i++)
+            {
+                TicTacToeButtons[i].GetComponent<ButtonTicTac>().PlayerMark = board[i];
+            }
+        }
+    }
+
 
     
 

@@ -6,6 +6,17 @@ public class ButtonTicTac : MonoBehaviour
 {
     private GameObject circle;
     private GameObject cross;
+    private string _playerMark = "0";
+    public string PlayerMark
+    {
+        get { return _playerMark; }
+        set 
+        {
+            _playerMark = value;
+            UpdateButton();
+        }
+    }
+    public int PositionInBoard;
     void Start()
     {
         circle = transform.Find("Circle").gameObject;
@@ -18,17 +29,33 @@ public class ButtonTicTac : MonoBehaviour
     {
         if(NetworkedClient.IsPlayer1())
         {
-            if(!circle.activeSelf)
-            {
-                circle.SetActive(true);
-            }
+            PlayerMark = "1";
         }
         else
         {
-            if (!cross.activeSelf)
-            {
-                cross.SetActive(true);
-            }
+            PlayerMark = "2";
+        }
+        UpdateBoard();
+        NetworkedClient.SendMessageToHost(ServerClientSignifiers.Board + "," + NetworkedClient.GetBoard());
+    }
+
+    private void UpdateBoard()
+    {
+        string[] board = NetworkedClient.GetBoard().Split(' ');
+        board[PositionInBoard] = PlayerMark;
+        NetworkedClient.SetBoard(string.Join(" ", board));
+    }
+    private void UpdateButton()
+    {
+        if(PlayerMark == "1")
+        {
+            circle.SetActive(true);
+            cross.SetActive(false);
+        }
+        else if(PlayerMark == "2")
+        {
+            circle.SetActive(false);
+            cross.SetActive(true);
         }
     }
 }

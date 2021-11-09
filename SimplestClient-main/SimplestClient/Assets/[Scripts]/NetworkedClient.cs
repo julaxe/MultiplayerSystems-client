@@ -21,6 +21,7 @@ public static class NetworkedClient
     private static bool isPlayer1 = false;
     private static bool isPlayerTurn = false;
     private static string player2 = "";
+    private static string board = "0 0 0 0 0 0 0 0 0";
     private static string serverMsg;
 
   
@@ -133,6 +134,11 @@ public static class NetworkedClient
             {
                 isPlayerTurn = true;
             }
+            else if (data[1] == ServerClientSignifiers.Board)
+            {
+                board = data[3];
+            }
+
         }
         Debug.Log("---- From server: " + msg);
     }
@@ -143,6 +149,9 @@ public static class NetworkedClient
     public static bool IsPlayer1() { return isPlayer1; }
     public static bool IsPlayerTurn() { return isPlayerTurn; }
     public static string Player2() { return player2; }
+
+    public static string GetBoard() { return board; }
+    public static void SetBoard(string newBoard) { board = newBoard; }
     public static string GetServerMessage() { return serverMsg;}
     public static bool GetServerErrorStatus() { return serverErrorStatus;}
 
@@ -155,6 +164,7 @@ public static class ServerClientSignifiers
     public static string Register = "002";
     public static string FindMatch = "003";
     public static string InGame = "004";
+    public static string Board = "005";
 }
 public static class ServerStatus
 {
