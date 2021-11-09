@@ -18,6 +18,9 @@ public static class NetworkedClient
     private static bool serverErrorStatus = false;
     private static bool isLoggedIn = false;
     private static bool inGame = false;
+    private static bool isPlayer1 = false;
+    private static bool isPlayerTurn = false;
+    private static string player2 = "";
     private static string serverMsg;
 
   
@@ -100,6 +103,15 @@ public static class NetworkedClient
         if (data[0] == ServerStatus.Error)
         {
             serverErrorStatus = true;
+            if(data[1] == ServerClientSignifiers.FindMatch)
+            {
+                inGame = false;
+                player2 = "";
+            }
+            else if (data[1] == ServerClientSignifiers.InGame)
+            {
+                isPlayerTurn = false;
+            }
         }
         else if (data[0] == ServerStatus.Success)
         {
@@ -111,6 +123,15 @@ public static class NetworkedClient
             else if (data[1] == ServerClientSignifiers.FindMatch)
             {
                 inGame = true;
+                if(data[3] == "Player1")
+                {
+                    isPlayer1 = true;
+                }
+                player2 = data[4];
+            }
+            else if (data[1] == ServerClientSignifiers.InGame)
+            {
+                isPlayerTurn = true;
             }
         }
         Debug.Log("---- From server: " + msg);
@@ -119,6 +140,9 @@ public static class NetworkedClient
     public static bool IsConnected() { return isConnected;}
     public static bool IsLoggedIn() { return isLoggedIn;}
     public static bool InGame() { return inGame;}
+    public static bool IsPlayer1() { return isPlayer1; }
+    public static bool IsPlayerTurn() { return isPlayerTurn; }
+    public static string Player2() { return player2; }
     public static string GetServerMessage() { return serverMsg;}
     public static bool GetServerErrorStatus() { return serverErrorStatus;}
 
@@ -126,9 +150,11 @@ public static class NetworkedClient
 }
 public static class ServerClientSignifiers
 {
+    public static string Message = "000";
     public static string Login = "001";
     public static string Register = "002";
     public static string FindMatch = "003";
+    public static string InGame = "004";
 }
 public static class ServerStatus
 {
