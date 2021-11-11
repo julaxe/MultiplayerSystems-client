@@ -9,6 +9,7 @@ public class GameScene : MonoBehaviour
     private GameObject InQueueText;
     private GameObject TicTacToeButtonPrefab;
     private GameObject TurnText;
+    private GameObject Restart;
     private GameObject VsText;
     private GameObject[] TicTacToeButtons;
     private string _board = "0 0 0 0 0 0 0 0 0";
@@ -20,15 +21,45 @@ public class GameScene : MonoBehaviour
     {
         InQueueText = GameObject.Find("Canvas/InQueueText");
         TicTacToe = GameObject.Find("Canvas/TicTacToe");
+        Restart = GameObject.Find("Canvas/Restart");
         TurnText = TicTacToe.transform.Find("Who's Turn").gameObject;
         VsText = TicTacToe.transform.Find("PlayingVS").gameObject;
         TicTacToeButtons = new GameObject[9];
         TicTacToe.SetActive(false);
+        Restart.SetActive(false);
         CreateTicTacToeGrid();
     }
 
     private void FixedUpdate()
     {
+        if (NetworkedClient.EndGame())
+        {
+            Restart.SetActive(true);
+            if (NetworkedClient.YouWin())
+            {
+                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "You Win!";
+            }
+            else
+            {
+                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "You Lose!";
+            }
+            if(NetworkedClient.Restart())
+            {
+                RestartBoard();
+            }
+        }
+        else
+        {
+            if (NetworkedClient.IsPlayerTurn())
+            {
+                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Your Turn!";
+            }
+            else
+            {
+                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Opponent turn!";
+            }
+        }
+        //check if player disconnects -> returns to the main menu
         if(!_inGame)
         {
             if(NetworkedClient.InGame())
@@ -43,18 +74,12 @@ public class GameScene : MonoBehaviour
         {
             if(!NetworkedClient.InGame())
             {
+                RestartBoard();
                 SceneManager.LoadScene(1); //main menu
             }
         }
-        if (NetworkedClient.IsPlayerTurn())
-        {
-            TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Your Turn!";
-        }
-        else
-        {
-            TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Opponent turn!";
-        }
-
+        
+        //check for any change from the server board
         UpdateBoard();
     }
     private void CreateTicTacToeGrid()
@@ -77,8 +102,39 @@ public class GameScene : MonoBehaviour
             for (int i = 0; i < 9; i++)
             {
                 TicTacToeButtons[i].GetComponent<ButtonTicTac>().PlayerMark = board[i];
+                if(board[i] == "0")
+                {
+                    TicTacToeButtons[i].GetComponent<ButtonTicTac>().Blank();
+                }
             }
         }
+    }
+
+    public void ClickRestartButton()
+    {
+        NetworkedClient.SendMessageToHost(ServerClientSignifiers.Restart);
+    }
+    private void RestartBoard()
+    {
+        NetworkedClient.RestartBoard();
+        NetworkedClient.SetBoard("0 0 0 0 0 0 0 0 0");
+        UpdateBoard();
+        Restart.SetActive(false);
+    }
+
+    public void ClickBackButton()
+    {
+
+        NetworkedClient.SendMessageToHost(ServerClientSignifiers.InGame);
+        if (!NetworkedClient.InGame())
+        {
+            SceneManager.LoadScene(1); //main menu
+        }
+        else
+        {
+            RestartBoard();
+        }
+       
     }
 
 

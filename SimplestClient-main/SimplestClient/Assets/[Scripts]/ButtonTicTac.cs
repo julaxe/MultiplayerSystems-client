@@ -27,16 +27,22 @@ public class ButtonTicTac : MonoBehaviour
 
     public void OnClickEvent()
     {
-        if(NetworkedClient.IsPlayer1())
+        if (NetworkedClient.IsPlayerTurn() && !NetworkedClient.EndGame())
         {
-            PlayerMark = "1";
+            if (PlayerMark == "0")
+            {
+                if (NetworkedClient.IsPlayer1())
+                {
+                    PlayerMark = "1";
+                }
+                else
+                {
+                    PlayerMark = "2";
+                }
+                UpdateBoard();
+                NetworkedClient.SendMessageToHost(ServerClientSignifiers.Board + "," + NetworkedClient.GetBoard());
+            }
         }
-        else
-        {
-            PlayerMark = "2";
-        }
-        UpdateBoard();
-        NetworkedClient.SendMessageToHost(ServerClientSignifiers.Board + "," + NetworkedClient.GetBoard());
     }
 
     private void UpdateBoard()
@@ -50,12 +56,16 @@ public class ButtonTicTac : MonoBehaviour
         if(PlayerMark == "1")
         {
             circle.SetActive(true);
-            cross.SetActive(false);
         }
         else if(PlayerMark == "2")
         {
-            circle.SetActive(false);
             cross.SetActive(true);
         }
+    }
+
+    public void Blank()
+    {
+        circle.SetActive(false);
+        cross.SetActive(false);
     }
 }
