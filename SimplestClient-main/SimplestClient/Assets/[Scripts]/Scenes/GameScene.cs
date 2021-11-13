@@ -15,6 +15,9 @@ public class GameScene : MonoBehaviour
     private string _board = "0 0 0 0 0 0 0 0 0";
 
     private bool _inGame = false;
+    private bool _gameFinished = false;
+    private string _playerMark = "";
+    private bool _playerTurn;
 
     
     void Start()
@@ -28,59 +31,66 @@ public class GameScene : MonoBehaviour
         TicTacToe.SetActive(false);
         Restart.SetActive(false);
         CreateTicTacToeGrid();
+
+        NetworkedClient.OnFindingMatch += Event_OnFindingMatch;
+        NetworkedClient.OnBoardChanged += Event_OnBoardChanged;
+        NetworkedClient.OnPlayerTurnChanged += Event_OnPlayerTurnChanged;
+        NetworkedClient.OnPlayerWin += Event_OnPlayerWin;
+        NetworkedClient.OnRestart += Event_OnRestart;
+        
+    }
+    private void Event_OnFindingMatch(bool found, string playerMark, string player2Name)
+    {
+        if(found)
+        {
+            TicTacToe.SetActive(true);
+            InQueueText.SetActive(false);
+            VsText.GetComponent<TMPro.TextMeshProUGUI>().text = "vs " + player2Name;
+            _inGame = true;
+            _playerMark = playerMark;
+
+        }
+        else
+        {
+            RestartBoard();
+            UnSubscribeEvents();
+            SceneManager.LoadScene(1); //main menu
+        }
+    }
+    private void Event_OnPlayerTurnChanged(bool playerTurn)
+    {
+        _playerTurn = playerTurn;
+        UpdatePlayerTurnText();
+    }
+    private void Event_OnBoardChanged(string newBoard)
+    {
+        UpdateBoard(newBoard);
+    }
+    private void Event_OnPlayerWin(bool win)
+    {
+        Restart.SetActive(true);
+        _gameFinished = true;
+        if (win)
+        {
+            TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "You Win!";
+        }
+        else
+        {
+            TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "You Lose!";
+        }
+    }
+    private void Event_OnRestart()
+    {
+        RestartBoard();
     }
 
-    private void FixedUpdate()
+    private void UnSubscribeEvents()
     {
-        if (NetworkedClient.EndGame())
-        {
-            Restart.SetActive(true);
-            if (NetworkedClient.YouWin())
-            {
-                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "You Win!";
-            }
-            else
-            {
-                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "You Lose!";
-            }
-            if(NetworkedClient.Restart())
-            {
-                RestartBoard();
-            }
-        }
-        else
-        {
-            if (NetworkedClient.IsPlayerTurn())
-            {
-                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Your Turn!";
-            }
-            else
-            {
-                TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Opponent turn!";
-            }
-        }
-        //check if player disconnects -> returns to the main menu
-        if(!_inGame)
-        {
-            if(NetworkedClient.InGame())
-            {
-                _inGame = true;
-                TicTacToe.SetActive(true);
-                InQueueText.SetActive(false);
-                VsText.GetComponent<TMPro.TextMeshProUGUI>().text = NetworkedClient.Player2();
-            }
-        }
-        else
-        {
-            if(!NetworkedClient.InGame())
-            {
-                RestartBoard();
-                SceneManager.LoadScene(1); //main menu
-            }
-        }
-        
-        //check for any change from the server board
-        UpdateBoard();
+        NetworkedClient.OnFindingMatch -= Event_OnFindingMatch;
+        NetworkedClient.OnBoardChanged -= Event_OnBoardChanged;
+        NetworkedClient.OnPlayerTurnChanged -= Event_OnPlayerTurnChanged;
+        NetworkedClient.OnPlayerWin -= Event_OnPlayerWin;
+        NetworkedClient.OnRestart -= Event_OnRestart;
     }
     private void CreateTicTacToeGrid()
     {
@@ -93,20 +103,29 @@ public class GameScene : MonoBehaviour
         }
     }
 
-    private void UpdateBoard()
+    private void UpdateBoard(string newBoard)
     {
-        if(_board != NetworkedClient.GetBoard())
+        _board = newBoard;
+        string[] board = _board.Split(' ');
+        for (int i = 0; i < 9; i++)
         {
-            _board = NetworkedClient.GetBoard();
-            string[] board = _board.Split(' ');
-            for (int i = 0; i < 9; i++)
+            TicTacToeButtons[i].GetComponent<ButtonTicTac>().PlayerMark = board[i];
+            if(board[i] == "0")
             {
-                TicTacToeButtons[i].GetComponent<ButtonTicTac>().PlayerMark = board[i];
-                if(board[i] == "0")
-                {
-                    TicTacToeButtons[i].GetComponent<ButtonTicTac>().Blank();
-                }
+                TicTacToeButtons[i].GetComponent<ButtonTicTac>().Blank();
             }
+        }
+       
+    }
+    private void UpdatePlayerTurnText()
+    {
+        if (_playerTurn)
+        {
+            TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Your Turn!";
+        }
+        else
+        {
+            TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Is Opponent turn!";
         }
     }
 
@@ -116,26 +135,31 @@ public class GameScene : MonoBehaviour
     }
     private void RestartBoard()
     {
-        NetworkedClient.RestartBoard();
-        NetworkedClient.SetBoard("0 0 0 0 0 0 0 0 0");
-        UpdateBoard();
+        _gameFinished = false;
+        UpdatePlayerTurnText();
+        UpdateBoard("0 0 0 0 0 0 0 0 0");
         Restart.SetActive(false);
     }
 
     public void ClickBackButton()
     {
-
         NetworkedClient.SendMessageToHost(ServerClientSignifiers.InGame);
-        if (!NetworkedClient.InGame())
-        {
-            SceneManager.LoadScene(1); //main menu
-        }
-        else
+        if(_inGame)
         {
             RestartBoard();
         }
-       
+        UnSubscribeEvents();
+        SceneManager.LoadScene(1); //main menu
     }
+
+    public bool IsPlayerTurn() { return _playerTurn; }
+    public bool IsInGame() { return _inGame; }
+    public bool IsTheGameFinished() { return _gameFinished; }
+    public string GetPlayerMark() { return _playerMark; }
+
+    public string GetBoard() { return _board; }
+    public void SetBoard(string newBoard) { _board = newBoard; }
+
 
 
     

@@ -6,6 +6,7 @@ public class ButtonTicTac : MonoBehaviour
 {
     private GameObject circle;
     private GameObject cross;
+    private GameScene gameScene;
     private string _playerMark = "0";
     public string PlayerMark
     {
@@ -21,35 +22,29 @@ public class ButtonTicTac : MonoBehaviour
     {
         circle = transform.Find("Circle").gameObject;
         cross = transform.Find("Cross").gameObject;
+        gameScene = GameObject.Find("Canvas").GetComponent<GameScene>();
         circle.SetActive(false);
         cross.SetActive(false);
     }
 
     public void OnClickEvent()
     {
-        if (NetworkedClient.IsPlayerTurn() && !NetworkedClient.EndGame())
+        if (gameScene.IsPlayerTurn() && !gameScene.IsTheGameFinished())
         {
             if (PlayerMark == "0")
             {
-                if (NetworkedClient.IsPlayer1())
-                {
-                    PlayerMark = "1";
-                }
-                else
-                {
-                    PlayerMark = "2";
-                }
+                PlayerMark = gameScene.GetPlayerMark();
                 UpdateBoard();
-                NetworkedClient.SendMessageToHost(ServerClientSignifiers.Board + "," + NetworkedClient.GetBoard());
+                NetworkedClient.SendMessageToHost(ServerClientSignifiers.Board + "," + gameScene.GetBoard());
             }
         }
     }
 
     private void UpdateBoard()
     {
-        string[] board = NetworkedClient.GetBoard().Split(' ');
+        string[] board = gameScene.GetBoard().Split(' ');
         board[PositionInBoard] = PlayerMark;
-        NetworkedClient.SetBoard(string.Join(" ", board));
+        gameScene.SetBoard(string.Join(" ", board));
     }
     private void UpdateButton()
     {

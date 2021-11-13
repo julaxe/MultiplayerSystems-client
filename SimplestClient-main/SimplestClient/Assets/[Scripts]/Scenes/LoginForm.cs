@@ -47,14 +47,20 @@ public class LoginForm : MonoBehaviour
 
         LoginButtonObject.GetComponent<Button>().onClick.AddListener(Login);
         RegisterButtonObject.GetComponent<Button>().onClick.AddListener(Register);
+        NetworkedClient.OnLogin += CheckLoginStatus;
         SetErrorMessage(false); //hide the error message
     }
-    private void FixedUpdate()
+    private void CheckLoginStatus(bool success, string errorMsg)
     {
-        SetErrorMessage(NetworkedClient.GetServerErrorStatus(), NetworkedClient.GetServerMessage());
-        if(NetworkedClient.IsLoggedIn())
+        if (success)
         {
+            SetErrorMessage(false, "");
+            NetworkedClient.OnLogin -= CheckLoginStatus;
             SceneManager.LoadScene(1); //Main menu
+        }
+        else
+        {
+            SetErrorMessage(true, errorMsg);
         }
     }
     public void Login()

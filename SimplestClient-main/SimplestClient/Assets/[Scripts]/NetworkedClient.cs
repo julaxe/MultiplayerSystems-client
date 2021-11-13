@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using System;
 
 public static class NetworkedClient
 {
@@ -15,17 +16,19 @@ public static class NetworkedClient
     private static byte error;
     private static bool isConnected = false;
     private static int ourClientID;
-    private static bool serverErrorStatus = false;
-    private static bool isLoggedIn = false;
-    private static bool inGame = false;
+
     private static bool isPlayer1 = false;
-    private static bool isPlayerTurn = false;
-    private static bool endGame = false;
-    private static bool youWin = false;
-    private static bool restart = false;
-    private static string player2 = "";
-    private static string board = "0 0 0 0 0 0 0 0 0";
+
     private static string serverMsg;
+
+    public static event Action<bool> OnMessageReceived;
+    public static event Action<bool, string> OnLogin;
+    public static event Action<bool, string, string> OnFindingMatch;
+    public static event Action<bool> OnPlayerTurnChanged;
+    public static event Action<string> OnBoardChanged;
+    public static event Action<bool> OnPlayerWin;
+    public static event Action OnRestart;
+    
 
   
 
@@ -76,7 +79,7 @@ public static class NetworkedClient
             hostID = NetworkTransport.AddHost(topology, 0);
             Debug.Log("Socket open.  Host ID = " + hostID);
 
-            connectionID = NetworkTransport.Connect(hostID, "192.168.1.107", socketPort, 0, out error); // server is local on network
+            connectionID = NetworkTransport.Connect(hostID, "192.168.1.108", socketPort, 0, out error); // server is local on network
 
             if (error == 0)
             {
@@ -106,53 +109,48 @@ public static class NetworkedClient
         serverMsg = data[2];
         if (data[0] == ServerStatus.Error)
         {
-            serverErrorStatus = true;
-            if (data[1] == ServerClientSignifiers.FindMatch)
+            if (data[1] == ServerClientSignifiers.Login || data[1] == ServerClientSignifiers.Register)
             {
-                inGame = false;
-                player2 = "";
+                OnLogin?.Invoke(false, serverMsg);
+            }
+            else if (data[1] == ServerClientSignifiers.FindMatch)
+            {
+                OnFindingMatch?.Invoke(false,"", "");
             }
             else if (data[1] == ServerClientSignifiers.InGame)
             {
-                isPlayerTurn = false;
+                OnPlayerTurnChanged?.Invoke(false);
             }
             else if (data[1] == ServerClientSignifiers.PlayerWin)
             {
-                endGame = true;
+                OnPlayerWin?.Invoke(false); // you win.
             }
         }
         else if (data[0] == ServerStatus.Success)
         {
-            serverErrorStatus = false;
             if (data[1] == ServerClientSignifiers.Login || data[1] == ServerClientSignifiers.Register)
             {
-                isLoggedIn = true;
+                OnLogin?.Invoke(true, "");
             }
             else if (data[1] == ServerClientSignifiers.FindMatch)
             {
-                inGame = true;
-                if (data[3] == "Player1")
-                {
-                    isPlayer1 = true;
-                }
-                player2 = data[4];
+                OnFindingMatch?.Invoke(true, data[3] == "Player1" ? "1" : "2", data[4]);
             }
             else if (data[1] == ServerClientSignifiers.InGame)
             {
-                isPlayerTurn = true;
+                OnPlayerTurnChanged?.Invoke(true); //player turn
             }
             else if (data[1] == ServerClientSignifiers.Board)
             {
-                board = data[3];
+                OnBoardChanged?.Invoke(data[3]); //board data
             }
             else if (data[1] == ServerClientSignifiers.PlayerWin)
             {
-                endGame = true;
-                youWin = true;
+                OnPlayerWin?.Invoke(true); // you win.
             }
             else if (data[1] == ServerClientSignifiers.Restart)
             {
-                restart = true;
+                OnRestart?.Invoke();
             }
 
 
@@ -161,27 +159,9 @@ public static class NetworkedClient
     }
 
     public static bool IsConnected() { return isConnected;}
-    public static bool IsLoggedIn() { return isLoggedIn;}
-    public static bool InGame() { return inGame;}
     public static bool IsPlayer1() { return isPlayer1; }
-    public static bool IsPlayerTurn() { return isPlayerTurn; }
-    public static string Player2() { return player2; }
-
-    public static bool YouWin() { return youWin; }
-    public static bool EndGame() { return endGame; }
-    public static bool Restart() { return restart; }
-    public static string GetBoard() { return board; }
-    public static void SetBoard(string newBoard) { board = newBoard; }
     public static string GetServerMessage() { return serverMsg;}
-    public static bool GetServerErrorStatus() { return serverErrorStatus;}
 
-    public static void RestartBoard()
-    {
-        youWin = false;
-        endGame = false;
-        restart = false;
-        isPlayer1 = false;
-    }
 
 
 }
