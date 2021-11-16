@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System;
 
 public class GameScene : MonoBehaviour
 {
@@ -12,14 +13,16 @@ public class GameScene : MonoBehaviour
     private GameObject Restart;
     private GameObject VsText;
     private GameObject[] TicTacToeButtons;
+    private GameObject ChatMessage;
     private string _board = "0 0 0 0 0 0 0 0 0";
 
     private bool _inGame = false;
     private bool _gameFinished = false;
     private string _playerMark = "";
     private bool _playerTurn;
+    private int _gameRoomID;
+    private bool _isPlayer = false; //this is for the spectators.
 
-    
     void Start()
     {
         InQueueText = GameObject.Find("Canvas/InQueueText");
@@ -27,6 +30,8 @@ public class GameScene : MonoBehaviour
         Restart = GameObject.Find("Canvas/Restart");
         TurnText = TicTacToe.transform.Find("Who's Turn").gameObject;
         VsText = TicTacToe.transform.Find("PlayingVS").gameObject;
+        
+        ChatMessage = Resources.Load<GameObject>("Prefabs/ChatMessage");
         TicTacToeButtons = new GameObject[9];
         TicTacToe.SetActive(false);
         Restart.SetActive(false);
@@ -37,9 +42,34 @@ public class GameScene : MonoBehaviour
         NetworkedClient.OnPlayerTurnChanged += Event_OnPlayerTurnChanged;
         NetworkedClient.OnPlayerWin += Event_OnPlayerWin;
         NetworkedClient.OnRestart += Event_OnRestart;
-        
+        NetworkedClient.OnChatMessageReceived += NetworkedClient_OnChatMessageReceived;
+        NetworkedClient.OnSpectateGame += NetworkedClient_OnSpectateGame;
+
+        if(NetworkedClient.IsSpectator())
+        {
+            NetworkedClient.SendMessageToHost(ServerClientSignifiers.SpectateGame + "," + NetworkedClient.gameRoomId);
+        }
+        else if(NetworkedClient.IsMatchHistory())
+        {
+            NetworkedClient.SendMessageToHost(Serve)
+        }
     }
-    private void Event_OnFindingMatch(bool found, string playerMark, string player2Name)
+
+    private void NetworkedClient_OnSpectateGame(string board)
+    {
+        TicTacToe.SetActive(true);
+        InQueueText.SetActive(false);
+        UpdateBoard(board);
+        _isPlayer = false;
+    }
+
+    private void NetworkedClient_OnChatMessageReceived(string msg)
+    {
+        GameObject newMessage = Instantiate(ChatMessage, TicTacToe.transform.Find("Chat/ChatMask/Panel"));
+        newMessage.GetComponent<TMPro.TextMeshProUGUI>().text = msg;
+    }
+
+    private void Event_OnFindingMatch(bool found, string playerMark, string player2Name, int gameRoomId)
     {
         if(found)
         {
@@ -48,6 +78,8 @@ public class GameScene : MonoBehaviour
             VsText.GetComponent<TMPro.TextMeshProUGUI>().text = "vs " + player2Name;
             _inGame = true;
             _playerMark = playerMark;
+            _gameRoomID = gameRoomId;
+            _isPlayer = true;
 
         }
         else
@@ -91,6 +123,8 @@ public class GameScene : MonoBehaviour
         NetworkedClient.OnPlayerTurnChanged -= Event_OnPlayerTurnChanged;
         NetworkedClient.OnPlayerWin -= Event_OnPlayerWin;
         NetworkedClient.OnRestart -= Event_OnRestart;
+        NetworkedClient.OnChatMessageReceived -= NetworkedClient_OnChatMessageReceived;
+        NetworkedClient.OnSpectateGame -= NetworkedClient_OnSpectateGame;
     }
     private void CreateTicTacToeGrid()
     {
@@ -135,8 +169,11 @@ public class GameScene : MonoBehaviour
     }
     private void RestartBoard()
     {
+        if(!NetworkedClient.IsSpectator())
+        {
+            UpdatePlayerTurnText();
+        }
         _gameFinished = false;
-        UpdatePlayerTurnText();
         UpdateBoard("0 0 0 0 0 0 0 0 0");
         Restart.SetActive(false);
     }
@@ -156,6 +193,9 @@ public class GameScene : MonoBehaviour
     public bool IsInGame() { return _inGame; }
     public bool IsTheGameFinished() { return _gameFinished; }
     public string GetPlayerMark() { return _playerMark; }
+
+    public bool IsPlayer() { return _isPlayer; }
+    public void SetAsAPlayer() { _isPlayer = true; }
 
     public string GetBoard() { return _board; }
     public void SetBoard(string newBoard) { _board = newBoard; }

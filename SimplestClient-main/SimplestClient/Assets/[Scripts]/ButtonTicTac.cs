@@ -20,11 +20,17 @@ public class ButtonTicTac : MonoBehaviour
     public int PositionInBoard;
     void Start()
     {
-        circle = transform.Find("Circle").gameObject;
-        cross = transform.Find("Cross").gameObject;
+        if(circle == null)
+        {
+            circle = transform.Find("Circle").gameObject;
+            circle.SetActive(false);
+        }
+        if(cross == null)
+        {
+            cross = transform.Find("Cross").gameObject;
+            cross.SetActive(false);
+        }
         gameScene = GameObject.Find("Canvas").GetComponent<GameScene>();
-        circle.SetActive(false);
-        cross.SetActive(false);
     }
 
     public void OnClickEvent()
@@ -50,17 +56,21 @@ public class ButtonTicTac : MonoBehaviour
     {
         if(PlayerMark == "1")
         {
+            if (circle == null) circle = transform.Find("Circle").gameObject;
             circle.SetActive(true);
         }
         else if(PlayerMark == "2")
         {
+            if(cross == null) cross = transform.Find("Cross").gameObject;
             cross.SetActive(true);
         }
     }
 
     public void Blank()
     {
+        if (circle == null) circle = transform.Find("Circle").gameObject;
         circle.SetActive(false);
+        if (cross == null) cross = transform.Find("Cross").gameObject;
         cross.SetActive(false);
     }
 }

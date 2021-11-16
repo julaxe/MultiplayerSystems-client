@@ -16,21 +16,25 @@ public static class NetworkedClient
     private static byte error;
     private static bool isConnected = false;
     private static int ourClientID;
-
-    private static bool isPlayer1 = false;
+    private static bool isSpectator = false;
+    private static bool isMatchHistory = false;
+    public static int gameRoomId;
 
     private static string serverMsg;
 
     public static event Action<bool> OnMessageReceived;
     public static event Action<bool, string> OnLogin;
-    public static event Action<bool, string, string> OnFindingMatch;
+    public static event Action<bool, string, string, int> OnFindingMatch;
     public static event Action<bool> OnPlayerTurnChanged;
     public static event Action<string> OnBoardChanged;
     public static event Action<bool> OnPlayerWin;
     public static event Action OnRestart;
-    
+    public static event Action<string> OnChatMessageReceived;
+    public static event Action<string, int> OnSpectateList;
+    public static event Action<string> OnSpectateGame;
 
-  
+
+
 
     public static void UpdateNetworkConnection()
     {
@@ -115,7 +119,7 @@ public static class NetworkedClient
             }
             else if (data[1] == ServerClientSignifiers.FindMatch)
             {
-                OnFindingMatch?.Invoke(false,"", "");
+                OnFindingMatch?.Invoke(false,"", "", -1);
             }
             else if (data[1] == ServerClientSignifiers.InGame)
             {
@@ -134,7 +138,7 @@ public static class NetworkedClient
             }
             else if (data[1] == ServerClientSignifiers.FindMatch)
             {
-                OnFindingMatch?.Invoke(true, data[3] == "Player1" ? "1" : "2", data[4]);
+                OnFindingMatch?.Invoke(true, data[3] == "Player1" ? "1" : "2", data[4], int.Parse(data[5]));
             }
             else if (data[1] == ServerClientSignifiers.InGame)
             {
@@ -152,6 +156,18 @@ public static class NetworkedClient
             {
                 OnRestart?.Invoke();
             }
+            else if (data[1] == ServerClientSignifiers.ChatUpdated)
+            {
+                OnChatMessageReceived?.Invoke(data[3]);
+            }
+            else if (data[1] == ServerClientSignifiers.SpectateList)
+            {
+                OnSpectateList?.Invoke(data[3], int.Parse(data[4]));
+            }
+            else if (data[1] == ServerClientSignifiers.SpectateGame)
+            {
+                OnSpectateGame?.Invoke(data[3]);
+            }
 
 
         }
@@ -159,7 +175,12 @@ public static class NetworkedClient
     }
 
     public static bool IsConnected() { return isConnected;}
-    public static bool IsPlayer1() { return isPlayer1; }
+    public static bool IsSpectator() { return isSpectator; }
+
+    public static void SetSpectator(bool value) { isSpectator = value; }
+    public static bool IsMatchHistory() { return isMatchHistory; }
+
+    public static void SetMatchHistory(bool value) { isMatchHistory = value; }
     public static string GetServerMessage() { return serverMsg;}
 
 
@@ -175,6 +196,11 @@ public static class ServerClientSignifiers
     public static string Board = "005";
     public static string PlayerWin = "006";
     public static string Restart = "007";
+    public static string ChatUpdated = "008";
+    public static string SpectateList = "009";
+    public static string SpectateGame = "010";
+    public static string MatchHistory = "011";
+    public static string ReplaySystem = "012";
 }
 public static class ServerStatus
 {
