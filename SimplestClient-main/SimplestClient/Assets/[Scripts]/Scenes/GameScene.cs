@@ -14,6 +14,8 @@ public class GameScene : MonoBehaviour
     private GameObject VsText;
     private GameObject[] TicTacToeButtons;
     private GameObject ChatMessage;
+    private GameObject BoardMoveReplay;
+    private GameObject ListOfReplays;
     private string _board = "0 0 0 0 0 0 0 0 0";
 
     private bool _inGame = false;
@@ -30,11 +32,14 @@ public class GameScene : MonoBehaviour
         Restart = GameObject.Find("Canvas/Restart");
         TurnText = TicTacToe.transform.Find("Who's Turn").gameObject;
         VsText = TicTacToe.transform.Find("PlayingVS").gameObject;
-        
+        BoardMoveReplay = Resources.Load<GameObject>("Prefabs/BoardMoveReplay");
+        ListOfReplays = transform.Find("ListOfReplays").gameObject;
+
         ChatMessage = Resources.Load<GameObject>("Prefabs/ChatMessage");
         TicTacToeButtons = new GameObject[9];
         TicTacToe.SetActive(false);
         Restart.SetActive(false);
+        ListOfReplays.SetActive(false);
         CreateTicTacToeGrid();
 
         NetworkedClient.OnFindingMatch += Event_OnFindingMatch;
@@ -44,23 +49,39 @@ public class GameScene : MonoBehaviour
         NetworkedClient.OnRestart += Event_OnRestart;
         NetworkedClient.OnChatMessageReceived += NetworkedClient_OnChatMessageReceived;
         NetworkedClient.OnSpectateGame += NetworkedClient_OnSpectateGame;
+        NetworkedClient.OnReplayGame += NetworkedClient_OnReplayGame;
 
-        if(NetworkedClient.IsSpectator())
+        GameObject SpectateData = GameObject.Find("SpectateData");
+        if (SpectateData)
         {
-            NetworkedClient.SendMessageToHost(ServerClientSignifiers.SpectateGame + "," + NetworkedClient.gameRoomId);
+            NetworkedClient.SendMessageToHost(ServerClientSignifiers.SpectateGame + "," + SpectateData.GetComponent<SpectatorData>().GetGameRoomId());
+            TicTacToe.SetActive(true);
+            InQueueText.SetActive(false);
+            _isPlayer = false;
         }
-        else if(NetworkedClient.IsMatchHistory())
+
+        GameObject MatchHistoryData = GameObject.Find("MatchHistoryData");
+        if(MatchHistoryData)
         {
-            NetworkedClient.SendMessageToHost(Serve)
+            NetworkedClient.SendMessageToHost(ServerClientSignifiers.ReplaySystem + "," + MatchHistoryData.GetComponent<GameReplayData>().GetReplayId());
+            TicTacToe.SetActive(true);
+            InQueueText.SetActive(false);
+            ListOfReplays.SetActive(true);
+            _isPlayer = false;
+            TurnText.GetComponent<TMPro.TextMeshProUGUI>().text = "Replay "+ MatchHistoryData.GetComponent<GameReplayData>().GetReplayName();
         }
+    }
+
+    private void NetworkedClient_OnReplayGame(string player, string board)
+    {
+        GameObject newReplayMove = Instantiate(BoardMoveReplay, ListOfReplays.transform.Find("Mask/Panel"));
+        newReplayMove.GetComponent<ReplayMoveButton>().SetPlayer(player);
+        newReplayMove.GetComponent<ReplayMoveButton>().SetBoard(board);
     }
 
     private void NetworkedClient_OnSpectateGame(string board)
     {
-        TicTacToe.SetActive(true);
-        InQueueText.SetActive(false);
         UpdateBoard(board);
-        _isPlayer = false;
     }
 
     private void NetworkedClient_OnChatMessageReceived(string msg)
@@ -125,6 +146,7 @@ public class GameScene : MonoBehaviour
         NetworkedClient.OnRestart -= Event_OnRestart;
         NetworkedClient.OnChatMessageReceived -= NetworkedClient_OnChatMessageReceived;
         NetworkedClient.OnSpectateGame -= NetworkedClient_OnSpectateGame;
+        NetworkedClient.OnReplayGame -= NetworkedClient_OnReplayGame;
     }
     private void CreateTicTacToeGrid()
     {
@@ -137,7 +159,7 @@ public class GameScene : MonoBehaviour
         }
     }
 
-    private void UpdateBoard(string newBoard)
+    public void UpdateBoard(string newBoard)
     {
         _board = newBoard;
         string[] board = _board.Split(' ');
@@ -186,6 +208,17 @@ public class GameScene : MonoBehaviour
             RestartBoard();
         }
         UnSubscribeEvents();
+        GameObject SpectateData = GameObject.Find("SpectateData");
+        if (SpectateData)
+        {
+            Destroy(SpectateData);
+        }
+
+        GameObject MatchHistoryData = GameObject.Find("MatchHistoryData");
+        if (MatchHistoryData)
+        {
+            Destroy(MatchHistoryData);
+        }
         SceneManager.LoadScene(1); //main menu
     }
 

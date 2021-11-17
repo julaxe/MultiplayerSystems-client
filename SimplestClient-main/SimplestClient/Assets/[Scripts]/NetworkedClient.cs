@@ -17,8 +17,6 @@ public static class NetworkedClient
     private static bool isConnected = false;
     private static int ourClientID;
     private static bool isSpectator = false;
-    private static bool isMatchHistory = false;
-    public static int gameRoomId;
 
     private static string serverMsg;
 
@@ -32,6 +30,8 @@ public static class NetworkedClient
     public static event Action<string> OnChatMessageReceived;
     public static event Action<string, int> OnSpectateList;
     public static event Action<string> OnSpectateGame;
+    public static event Action<string, int> OnMatchHistory;
+    public static event Action<string, string> OnReplayGame;
 
 
 
@@ -168,6 +168,14 @@ public static class NetworkedClient
             {
                 OnSpectateGame?.Invoke(data[3]);
             }
+            else if (data[1] == ServerClientSignifiers.MatchHistory)
+            {
+                OnMatchHistory?.Invoke(data[3], int.Parse(data[4]));
+            }
+            else if (data[1] == ServerClientSignifiers.ReplaySystem)
+            {
+                OnReplayGame?.Invoke(data[3], data[4]);
+            }
 
 
         }
@@ -178,9 +186,7 @@ public static class NetworkedClient
     public static bool IsSpectator() { return isSpectator; }
 
     public static void SetSpectator(bool value) { isSpectator = value; }
-    public static bool IsMatchHistory() { return isMatchHistory; }
 
-    public static void SetMatchHistory(bool value) { isMatchHistory = value; }
     public static string GetServerMessage() { return serverMsg;}
 
 

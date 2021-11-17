@@ -30,8 +30,15 @@ public class SpectateListScene : MonoBehaviour
         newGameRoom.GetComponent<GameRoomButton>().SetGameId(roomId);
     }
 
+    public void UnsubscribeEvents()
+    {
+        NetworkedClient.OnSpectateList -= NetworkedClient_OnSpectateList;
+    }
     public void GoToMainMenu()
     {
+        UnsubscribeEvents();
+        GameObject SpectateData = GameObject.Find("SpectateData");
+        Destroy(SpectateData);
         SceneManager.LoadScene(1);
     }    
 }

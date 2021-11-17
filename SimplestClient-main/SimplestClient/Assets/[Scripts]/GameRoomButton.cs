@@ -17,7 +17,12 @@ public class GameRoomButton : MonoBehaviour
     }
     public void OnClickGameRoom()
     {
-        NetworkedClient.gameRoomId = _gameRoomId;
-        SceneManager.LoadScene(2);
+        GameObject SpectatorData = GameObject.Find("SpectateData");
+        if (SpectatorData)
+        {
+            GameObject.Find("Canvas").GetComponent<SpectateListScene>().UnsubscribeEvents();
+            SpectatorData.GetComponent<SpectatorData>().SetGameRoomId(_gameRoomId);
+            SceneManager.LoadScene(2);
+        }
     }    
 }
